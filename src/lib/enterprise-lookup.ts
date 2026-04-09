@@ -1,0 +1,1 @@
+export const MIN_ENTERPRISE_LOOKUP_QUERY_LENGTH = 3;
