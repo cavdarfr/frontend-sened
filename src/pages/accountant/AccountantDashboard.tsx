@@ -12,19 +12,22 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { EnterpriseLookupField } from '@/components/shared/EnterpriseLookupField';
 import { useCompany } from '@/hooks/useCompany';
 import {
     companyService,
     type AccountantLinkRequest,
     type AccountantLinkRequestCompanySummary,
-    LinkedClientWithStats,
+    type LinkedClientWithStats,
 } from '@/services/api';
+import type { SirenSearchResult } from '@/types';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
@@ -41,6 +44,9 @@ export function AccountantDashboard() {
     const [merchantSearchLoading, setMerchantSearchLoading] = useState(false);
     const [outgoingRequests, setOutgoingRequests] = useState<AccountantLinkRequest[]>([]);
     const [creatingRequestFor, setCreatingRequestFor] = useState<string | null>(null);
+    const [selectedEnterprise, setSelectedEnterprise] = useState<SirenSearchResult | null>(null);
+    const [inviteMerchantAdminEmail, setInviteMerchantAdminEmail] = useState('');
+    const [invitingNewMerchant, setInvitingNewMerchant] = useState(false);
 
     const cabinetCompany = useMemo(() => {
         if (currentCompany && ['accountant', 'accountant_consultant'].includes(currentCompany.role)) {
@@ -59,6 +65,8 @@ export function AccountantDashboard() {
     }, [companies, currentCompany]);
 
     const canCreateMerchantLinkRequest = cabinetCompany?.role === 'accountant';
+    const normalizedInviteMerchantAdminEmail = inviteMerchantAdminEmail.trim().toLowerCase();
+    const isInviteMerchantAdminEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedInviteMerchantAdminEmail);
 
     useEffect(() => {
         const loadData = async () => {
@@ -139,6 +147,23 @@ export function AccountantDashboard() {
         setOutgoingRequests(pendingRequests as AccountantLinkRequest[]);
     };
 
+    const resetRequestDialogState = () => {
+        setMerchantQuery('');
+        setMerchantResults([]);
+        setMerchantSearchLoading(false);
+        setCreatingRequestFor(null);
+        setSelectedEnterprise(null);
+        setInviteMerchantAdminEmail('');
+        setInvitingNewMerchant(false);
+    };
+
+    const handleRequestDialogOpenChange = (open: boolean) => {
+        setRequestDialogOpen(open);
+        if (!open) {
+            resetRequestDialogState();
+        }
+    };
+
     const handleCreateLinkRequest = async (merchantCompanyId: string) => {
         if (!cabinetCompany || cabinetCompany.role !== 'accountant') {
             return;
@@ -161,6 +186,68 @@ export function AccountantDashboard() {
             });
         } finally {
             setCreatingRequestFor(null);
+        }
+    };
+
+    const handleInviteNewMerchantAdmin = async () => {
+        if (!cabinetCompany || cabinetCompany.role !== 'accountant' || !selectedEnterprise || !isInviteMerchantAdminEmailValid) {
+            return;
+        }
+
+        try {
+            setInvitingNewMerchant(true);
+            const result = await companyService.inviteNewMerchantAdmin(cabinetCompany.id, {
+                email: normalizedInviteMerchantAdminEmail,
+                company_name: selectedEnterprise.company_name,
+                siren: selectedEnterprise.siren,
+                siret: selectedEnterprise.siret || undefined,
+                address: selectedEnterprise.address || undefined,
+                postal_code: selectedEnterprise.postal_code || undefined,
+                city: selectedEnterprise.city || undefined,
+                country: selectedEnterprise.country_code || undefined,
+            });
+
+            if (result.status === 'existing_merchant') {
+                setMerchantResults((prev) => {
+                    const nextResult: AccountantLinkRequestCompanySummary = {
+                        id: result.merchant_company.id,
+                        name: result.merchant_company.name,
+                        legal_name: null,
+                        siren: result.merchant_company.siren,
+                        email: null,
+                        city: selectedEnterprise.city || null,
+                        logo_url: null,
+                    };
+
+                    return [
+                        nextResult,
+                        ...prev.filter((merchant) => merchant.id !== result.merchant_company.id),
+                    ];
+                });
+                setMerchantQuery(result.merchant_company.siren || result.merchant_company.name);
+                setSelectedEnterprise(null);
+                setInviteMerchantAdminEmail('');
+                toast({
+                    title: 'Marchand déjà inscrit',
+                    description: 'Ce commerçant existe déjà sur la plateforme. Vous pouvez lui envoyer la demande de liaison ci-dessus.',
+                });
+                return;
+            }
+
+            await refreshDashboardData();
+            toast({
+                title: 'Invitation envoyée',
+                description: 'Le futur administrateur marchand recevra un email pour créer son compte et rejoindre le dossier client.',
+            });
+            handleRequestDialogOpenChange(false);
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Invitation impossible',
+                description: error.message || 'Le commerçant n’a pas pu être invité.',
+            });
+        } finally {
+            setInvitingNewMerchant(false);
         }
     };
 
@@ -230,7 +317,12 @@ export function AccountantDashboard() {
                                         Envoyée le {new Date(request.created_at).toLocaleDateString('fr-FR')}
                                     </p>
                                 </div>
-                                <Badge variant="secondary">En attente du marchand</Badge>
+                                <div className="flex items-center gap-2">
+                                    {request.request_origin === 'new_client_invitation' && (
+                                        <Badge variant="outline">Nouveau client</Badge>
+                                    )}
+                                    <Badge variant="secondary">En attente du marchand</Badge>
+                                </div>
                             </div>
                         ))}
                     </CardContent>
@@ -293,39 +385,47 @@ export function AccountantDashboard() {
                 </CardContent>
             </Card>
 
-            <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
+            <Dialog open={requestDialogOpen} onOpenChange={handleRequestDialogOpenChange}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Ajouter un commerçant</DialogTitle>
                         <DialogDescription>
-                            Recherchez un commerçant déjà inscrit sur la plateforme, puis envoyez-lui une demande de liaison.
+                            Recherchez un commerçant déjà inscrit sur la plateforme ou invitez un nouvel administrateur marchand depuis cette même modale.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <Input
-                                placeholder="Nom du commerçant ou SIREN"
-                                value={merchantQuery}
-                                onChange={(event) => setMerchantQuery(event.target.value)}
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        event.preventDefault();
-                                        void handleSearchMerchants();
-                                    }
-                                }}
-                            />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => void handleSearchMerchants()}
-                                disabled={merchantSearchLoading || !merchantQuery.trim()}
-                            >
-                                {merchantSearchLoading ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Search className="h-4 w-4" />
-                                )}
-                            </Button>
+                        <div className="space-y-3">
+                            <div className="space-y-1">
+                                <h3 className="font-medium">Commerçant déjà inscrit</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Recherchez un commerçant existant sur la plateforme puis envoyez-lui une demande de liaison.
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Nom du commerçant ou SIREN"
+                                    value={merchantQuery}
+                                    onChange={(event) => setMerchantQuery(event.target.value)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            void handleSearchMerchants();
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => void handleSearchMerchants()}
+                                    disabled={merchantSearchLoading || !merchantQuery.trim()}
+                                >
+                                    {merchantSearchLoading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Search className="h-4 w-4" />
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                         <div className="space-y-3">
                             {merchantResults.length === 0 ? (
@@ -360,9 +460,53 @@ export function AccountantDashboard() {
                                 ))
                             )}
                         </div>
+                        <Separator />
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <h3 className="font-medium">Inviter un commerçant non inscrit</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Recherchez l’entreprise par nom, SIREN ou SIRET puis indiquez l’email du futur administrateur marchand. S’il n’a pas encore de compte, il le créera depuis le mail reçu.
+                                </p>
+                            </div>
+                            <EnterpriseLookupField
+                                mode="authenticated"
+                                onSelect={(enterprise) => setSelectedEnterprise(enterprise)}
+                                onClear={() => setSelectedEnterprise(null)}
+                                selectedName={selectedEnterprise?.company_name}
+                                label="Entreprise à inviter"
+                                placeholder="Nom, SIREN ou SIRET..."
+                            />
+                            <div className="space-y-2">
+                                <Input
+                                    type="email"
+                                    placeholder="email@entreprise.fr"
+                                    value={inviteMerchantAdminEmail}
+                                    onChange={(event) => setInviteMerchantAdminEmail(event.target.value)}
+                                />
+                                {inviteMerchantAdminEmail.trim().length > 0 && !isInviteMerchantAdminEmailValid && (
+                                    <p className="text-sm text-destructive">
+                                        Saisissez une adresse email valide.
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    onClick={() => void handleInviteNewMerchantAdmin()}
+                                    disabled={!selectedEnterprise || !isInviteMerchantAdminEmailValid || invitingNewMerchant}
+                                >
+                                    {invitingNewMerchant ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Send className="mr-2 h-4 w-4" />
+                                    )}
+                                    Envoyer l’invitation
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setRequestDialogOpen(false)}>
+                        <Button variant="outline" onClick={() => handleRequestDialogOpenChange(false)}>
                             Fermer
                         </Button>
                     </DialogFooter>

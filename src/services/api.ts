@@ -185,6 +185,29 @@ export interface InviteLinkedClientMerchantAdminData {
 
 export type LinkedClientMerchantAdminInvitation = CompanyInvitation;
 
+export interface InviteNewMerchantAdminData {
+  email: string;
+  company_name: string;
+  siren: string;
+  siret?: string;
+  address?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+}
+
+export type InviteNewMerchantAdminResponse =
+  | {
+      status: "existing_merchant";
+      merchant_company: { id: string; name: string; siren: string | null };
+    }
+  | {
+      status: "invited";
+      client_company_id: string;
+      invitation_id: string;
+      email: string;
+    };
+
 export interface MembersQuota {
   max_members: number | null;
   current_members: number;
@@ -245,6 +268,7 @@ export interface AccountantLinkRequest {
   id: string;
   accountant_company_id: string;
   merchant_company_id: string;
+  request_origin: "existing_merchant" | "new_client_invitation";
   requested_by: string;
   status: "pending" | "accepted" | "rejected" | "cancelled";
   created_at: string;
@@ -1130,6 +1154,16 @@ export const companyService = {
 
   async getLinkedClients(id: string): Promise<any[]> {
     return fetchWithAuth(`/companies/${id}/linked-clients`);
+  },
+
+  async inviteNewMerchantAdmin(
+    companyId: string,
+    data: InviteNewMerchantAdminData,
+  ): Promise<InviteNewMerchantAdminResponse> {
+    return fetchWithAuth(`/companies/${companyId}/invite-new-merchant-admin`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
 
   async getLinkedClientMerchantAdminInvitations(
