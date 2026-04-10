@@ -277,12 +277,21 @@ export function HomePage() {
                                 </div>
                             </div>
 
-                            {/* Droite — Bento visuel */}
+                            {/* Droite — logo principal */}
+                            <div className="hidden md:flex relative w-full max-w-lg ml-auto min-h-[280px] md:min-h-[360px] items-center justify-center">
+                                <img
+                                    src="/brand/principal/SVG/PRINCIPAL_bleu.svg"
+                                    alt="Sened"
+                                    className="w-full max-w-md h-auto object-contain"
+                                />
+                            </div>
+
+                            {/*
+                            Droite — Bento visuel (désactivé)
                             <div
                                 className="hidden md:block relative w-full max-w-lg ml-auto"
                                 style={{ minHeight: "480px" }}
                             >
-                                {/* Carte SENED — top left */}
                                 <div className="absolute top-0 left-0 w-64 rounded-2xl bg-white dark:bg-card border border-border/60 shadow-lg p-5 z-10">
                                     <img
                                         src="/brand/principal/SVG/PRINCIPAL_bleu.svg"
@@ -297,7 +306,6 @@ export function HomePage() {
                                     </p>
                                 </div>
 
-                                {/* Image bloc — top right (scrabble) */}
                                 <div className="absolute top-0 right-0 w-48 h-36 rounded-2xl shadow-lg overflow-hidden">
                                     <img
                                         src="https://images.unsplash.com/photo-1577455547126-faa6d0f7a8d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"
@@ -306,30 +314,22 @@ export function HomePage() {
                                     />
                                 </div>
 
-                                {/* Phone mockup — center */}
                                 <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 w-44">
                                     <div className="relative rounded-[2rem] bg-gray-900 p-2 shadow-2xl border-2 border-gray-700">
-                                        {/* Notch */}
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-gray-900 rounded-b-xl z-30" />
-                                        {/* Screen */}
-                                        <div
-                                            className="rounded-[1.5rem] overflow-hidden"
-                                            style={{ minHeight: "280px" }}
-                                        >
+                                        <div className="relative h-[280px] rounded-[1.5rem] overflow-hidden">
                                             <img
                                                 src="https://images.unsplash.com/photo-1587400873558-dfac934a6051?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"
                                                 alt="Mobile accounting"
-                                                className="w-full h-full object-cover"
+                                                className="absolute inset-0 size-full object-cover"
                                             />
                                         </div>
-                                        {/* Home indicator */}
                                         <div className="flex justify-center mt-1">
                                             <div className="w-10 h-1 rounded-full bg-gray-600" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Badge Certifié — middle right */}
                                 <div className="absolute top-48 right-4 z-30 w-24 h-24 rounded-full bg-white dark:bg-card border border-border/60 shadow-lg flex flex-col items-center justify-center">
                                     <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
                                         Certifié
@@ -342,7 +342,6 @@ export function HomePage() {
                                     </span>
                                 </div>
 
-                                {/* Mini chart — bottom right */}
                                 <div className="absolute bottom-0 right-6 z-10 w-36 h-24 rounded-xl shadow-lg overflow-hidden">
                                     <img
                                         src="https://images.unsplash.com/photo-1762279389020-eeeb69c25813?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=300"
@@ -351,6 +350,7 @@ export function HomePage() {
                                     />
                                 </div>
                             </div>
+                            */}
                         </div>
                     </div>
                 </section>

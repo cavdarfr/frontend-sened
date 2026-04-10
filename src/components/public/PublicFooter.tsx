@@ -32,11 +32,6 @@ export function PublicFooter() {
                                     Tarifs
                                 </a>
                             </li>
-                            <li>
-                                <a href="#faq" className="hover:text-foreground transition-colors">
-                                    FAQ
-                                </a>
-                            </li>
                         </ul>
                     </div>
 

@@ -10,34 +10,17 @@ import {
   Download,
   Euro,
   FileMinus,
-  Loader2,
   Receipt,
-  Shield,
-  Trash2,
-  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -74,7 +57,6 @@ import {
   AccountantDocumentType,
   companyService,
   LinkedClientWithStats,
-  LinkedClientMerchantAdminInvitation,
   PaginatedDocuments,
 } from "@/services/api";
 
@@ -170,17 +152,6 @@ export function AccountantClientDetails() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [merchantAdminInviteEmail, setMerchantAdminInviteEmail] = useState("");
-  const [merchantAdminInvitationsLoading, setMerchantAdminInvitationsLoading] =
-    useState(false);
-  const [merchantAdminInvitations, setMerchantAdminInvitations] = useState<
-    LinkedClientMerchantAdminInvitation[]
-  >([]);
-  const [invitingMerchantAdmin, setInvitingMerchantAdmin] = useState(false);
-  const [
-    cancellingMerchantAdminInvitationId,
-    setCancellingMerchantAdminInvitationId,
-  ] = useState<string | null>(null);
 
   const cabinetCompany = useMemo(() => {
     if (
@@ -229,8 +200,6 @@ export function AccountantClientDetails() {
   const noDownloadableFilteredDocuments = documents.downloadable_total === 0;
   const tooManyDownloadableFilteredDocuments =
     documents.downloadable_total > 100;
-  const canManageMerchantAdminInvitations =
-    cabinetCompany?.role === "accountant";
 
   useEffect(() => {
     const loadClient = async () => {
@@ -339,53 +308,6 @@ export function AccountantClientDetails() {
     selectedPeriod,
     selectedStatuses,
     companiesLoading,
-  ]);
-
-  useEffect(() => {
-    const loadMerchantAdminInvitations = async () => {
-      if (companiesLoading) {
-        return;
-      }
-
-      if (
-        !cabinetCompany ||
-        !clientId ||
-        cabinetCompany.role !== "accountant"
-      ) {
-        setMerchantAdminInvitations([]);
-        setMerchantAdminInvitationsLoading(false);
-        return;
-      }
-
-      setMerchantAdminInvitationsLoading(true);
-      try {
-        const invitations =
-          await companyService.getLinkedClientMerchantAdminInvitations(
-            cabinetCompany.id,
-            clientId,
-          );
-        setMerchantAdminInvitations(invitations);
-      } catch (error: any) {
-        setMerchantAdminInvitations([]);
-        toast({
-          variant: "destructive",
-          title: "Chargement impossible",
-          description:
-            error.message ||
-            "Les invitations admin marchand n’ont pas pu être chargées.",
-        });
-      } finally {
-        setMerchantAdminInvitationsLoading(false);
-      }
-    };
-
-    void loadMerchantAdminInvitations();
-  }, [
-    cabinetCompany?.id,
-    cabinetCompany?.role,
-    clientId,
-    companiesLoading,
-    toast,
   ]);
 
   const handleDownload = async (document: AccountantDocument) => {
@@ -527,88 +449,6 @@ export function AccountantClientDetails() {
     }
   };
 
-  const handleInviteMerchantAdmin = async () => {
-    if (!cabinetCompany || !clientId || cabinetCompany.role !== "accountant") {
-      return;
-    }
-
-    const normalizedEmail = merchantAdminInviteEmail.trim().toLowerCase();
-    if (!normalizedEmail) {
-      toast({
-        variant: "destructive",
-        title: "Email requis",
-        description:
-          "Renseignez l’email de l’administrateur marchand à inviter.",
-      });
-      return;
-    }
-
-    setInvitingMerchantAdmin(true);
-    try {
-      await companyService.inviteLinkedClientMerchantAdmin(
-        cabinetCompany.id,
-        clientId,
-        {
-          email: normalizedEmail,
-        },
-      );
-      setMerchantAdminInviteEmail("");
-      const invitations =
-        await companyService.getLinkedClientMerchantAdminInvitations(
-          cabinetCompany.id,
-          clientId,
-        );
-      setMerchantAdminInvitations(invitations);
-      toast({
-        title: "Invitation envoyée",
-        description:
-          "L’administrateur marchand peut maintenant créer son compte depuis le lien reçu par email.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Invitation impossible",
-        description:
-          error.message ||
-          "L’invitation admin marchand n’a pas pu être envoyée.",
-      });
-    } finally {
-      setInvitingMerchantAdmin(false);
-    }
-  };
-
-  const handleCancelMerchantAdminInvitation = async (invitationId: string) => {
-    if (!cabinetCompany || !clientId || cabinetCompany.role !== "accountant") {
-      return;
-    }
-
-    setCancellingMerchantAdminInvitationId(invitationId);
-    try {
-      await companyService.cancelLinkedClientMerchantAdminInvitation(
-        cabinetCompany.id,
-        clientId,
-        invitationId,
-      );
-      setMerchantAdminInvitations((previous) =>
-        previous.filter((invitation) => invitation.id !== invitationId),
-      );
-      toast({
-        title: "Invitation annulée",
-        description: "L’invitation admin marchand a été supprimée.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Annulation impossible",
-        description:
-          error.message ||
-          "L’invitation admin marchand n’a pas pu être annulée.",
-      });
-    } finally {
-      setCancellingMerchantAdminInvitationId(null);
-    }
-  };
-
   if (loading || companiesLoading) {
     return (
       <div className="space-y-6">
@@ -719,139 +559,6 @@ export function AccountantClientDetails() {
           </Card>
         ))}
       </div>
-
-      {canManageMerchantAdminInvitations && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Admin marchand
-            </CardTitle>
-            <CardDescription>
-              Invitez l’administrateur de ce dossier client à créer son compte
-              marchand sur la plateforme.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Input
-                type="email"
-                placeholder="admin@entreprise.fr"
-                value={merchantAdminInviteEmail}
-                onChange={(event) =>
-                  setMerchantAdminInviteEmail(event.target.value)
-                }
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    void handleInviteMerchantAdmin();
-                  }
-                }}
-                disabled={invitingMerchantAdmin}
-              />
-              <Button
-                type="button"
-                onClick={() => void handleInviteMerchantAdmin()}
-                disabled={
-                  invitingMerchantAdmin ||
-                  merchantAdminInviteEmail.trim().length === 0
-                }
-              >
-                {invitingMerchantAdmin ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <UserPlus className="mr-2 h-4 w-4" />
-                )}
-                Envoyer l’invitation
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium">
-                  Invitations en attente ({merchantAdminInvitations.length})
-                </p>
-                <Badge variant="outline">
-                  <Shield className="mr-1 h-3 w-3" />
-                  Administrateur
-                </Badge>
-              </div>
-
-              {merchantAdminInvitationsLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              ) : merchantAdminInvitations.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                  Aucune invitation admin marchand en attente pour ce dossier
-                  client.
-                </div>
-              ) : (
-                merchantAdminInvitations.map((invitation) => (
-                  <div
-                    key={invitation.id}
-                    className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium">{invitation.email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Expire le {formatDate(invitation.expires_at)}
-                      </p>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="self-start text-destructive hover:text-destructive"
-                          disabled={
-                            cancellingMerchantAdminInvitationId ===
-                            invitation.id
-                          }
-                        >
-                          {cancellingMerchantAdminInvitationId ===
-                          invitation.id ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="mr-2 h-4 w-4" />
-                          )}
-                          Annuler
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Annuler cette invitation ?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            L’invitation envoyée à {invitation.email} sera
-                            supprimée.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Garder</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() =>
-                              void handleCancelMerchantAdminInvitation(
-                                invitation.id,
-                              )
-                            }
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Annuler l’invitation
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="border-dashed bg-muted/20">
         <CardContent className="flex flex-col gap-4 pt-6 xl:flex-row xl:items-end xl:justify-between">

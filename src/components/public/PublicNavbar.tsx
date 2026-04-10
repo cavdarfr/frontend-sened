@@ -30,12 +30,6 @@ export function PublicNavbar() {
                         onClick={() => scrollToSection('features')}
                         className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        Produit
-                    </button>
-                    <button
-                        onClick={() => scrollToSection('features')}
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
                         Activité
                     </button>
                     <button
@@ -43,12 +37,6 @@ export function PublicNavbar() {
                         className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                     >
                         Tarifs
-                    </button>
-                    <button
-                        onClick={() => scrollToSection('faq')}
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        Ressources
                     </button>
                 </nav>
 
@@ -80,12 +68,6 @@ export function PublicNavbar() {
                             onClick={() => scrollToSection('features')}
                             className="text-left text-sm font-medium text-muted-foreground hover:text-foreground"
                         >
-                            Produit
-                        </button>
-                        <button
-                            onClick={() => scrollToSection('features')}
-                            className="text-left text-sm font-medium text-muted-foreground hover:text-foreground"
-                        >
                             Activité
                         </button>
                         <button
@@ -93,12 +75,6 @@ export function PublicNavbar() {
                             className="text-left text-sm font-medium text-muted-foreground hover:text-foreground"
                         >
                             Tarifs
-                        </button>
-                        <button
-                            onClick={() => scrollToSection('faq')}
-                            className="text-left text-sm font-medium text-muted-foreground hover:text-foreground"
-                        >
-                            Ressources
                         </button>
                         <div className="flex flex-col gap-2 pt-2 border-t">
                             <Link to="/auth/login" onClick={() => setMobileMenuOpen(false)}>
