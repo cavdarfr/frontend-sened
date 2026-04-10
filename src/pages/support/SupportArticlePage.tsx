@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import {
     AlertCircle,
@@ -17,6 +18,7 @@ import {
     supportCategoryLabels,
     type SupportArticleLink,
 } from '@/content/support-content';
+import { DEFAULT_DESCRIPTION, formatDocumentTitle } from '@/lib/seo';
 
 function ArticleLink({ link }: { link: SupportArticleLink }) {
     const isAppLink = link.kind === 'app';
@@ -43,6 +45,10 @@ export function SupportArticlePage() {
     if (!article) {
         return (
             <div className="mx-auto max-w-3xl space-y-6">
+                <Helmet>
+                    <title>{formatDocumentTitle('Article introuvable')}</title>
+                    <meta name="description" content={DEFAULT_DESCRIPTION} />
+                </Helmet>
                 <div className="rounded-[28px] border border-dashed border-border/80 bg-card/70 p-8 text-center shadow-sm">
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
                         <AlertCircle className="h-6 w-6" />
@@ -68,6 +74,10 @@ export function SupportArticlePage() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-8">
+            <Helmet>
+                <title>{formatDocumentTitle(article.title)}</title>
+                <meta name="description" content={article.description} />
+            </Helmet>
             <div className="rounded-[32px] border border-border/60 bg-gradient-to-br from-background via-background to-muted/40 p-6 shadow-sm sm:p-8">
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <Link to="/support" className="font-medium transition-colors hover:text-foreground">

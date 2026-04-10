@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PublicNavbar } from '@/components/public/PublicNavbar';
 import { PublicFooter } from '@/components/public/PublicFooter';
 import { STATIC_LEGAL_DOCUMENTS } from '@/content/legal';
+import { DEFAULT_DESCRIPTION, formatDocumentTitle } from '@/lib/seo';
 
 export function LegalDocumentPage() {
     const { slug = '' } = useParams<{ slug: string }>();
@@ -15,8 +17,15 @@ export function LegalDocumentPage() {
         [slug],
     );
 
+    const titleSegment = document?.title ?? 'Document légal introuvable';
+    const metaDescription = document?.description ?? DEFAULT_DESCRIPTION;
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900">
+            <Helmet>
+                <title>{formatDocumentTitle(titleSegment)}</title>
+                <meta name="description" content={metaDescription} />
+            </Helmet>
             <PublicNavbar />
 
             <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">

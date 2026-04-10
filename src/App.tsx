@@ -1,4 +1,5 @@
 import { useRoutes } from 'react-router-dom';
+import { RouteDocumentHead } from '@/components/RouteDocumentHead';
 import { publicRoutes, protectedRoutes, subscribeRoute, redirectRoutes } from './routes';
 import { quotesRoutes } from './routes/quotes.routes';
 import { invoicesRoutes } from './routes/invoices.routes';
@@ -40,7 +41,12 @@ function App() {
         ...redirectRoutes
     ]);
 
-    return element;
+    return (
+        <>
+            <RouteDocumentHead />
+            {element}
+        </>
+    );
 }
 
 export default App;
