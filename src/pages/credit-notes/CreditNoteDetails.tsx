@@ -38,6 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { invoiceService, chorusProService } from '@/services/api';
 import { useOperationalCompany } from '@/hooks/useOperationalCompany';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useWebSocketEvent } from '@/context/WebSocketContext';
 import { getChorusStatusLabel, getChorusStatusColor } from '@/lib/invoice-status-config';
 import type { Invoice, ChorusProSubmission, ChorusProSettings } from '@/types';
@@ -47,9 +48,11 @@ export function CreditNoteDetails() {
     const navigate = useNavigate();
     const { toast } = useToast();
     const { operationalCompany: currentCompany } = useOperationalCompany();
+    const permissions = usePermissions(currentCompany?.role, currentCompany?.company_owner_role);
 
     const [creditNote, setCreditNote] = useState<Invoice | null>(null);
     const [loading, setLoading] = useState(true);
+    const [resendingEmail, setResendingEmail] = useState(false);
 
     // Chorus Pro
     const [chorusSubmission, setChorusSubmission] = useState<ChorusProSubmission | null>(null);
@@ -170,6 +173,29 @@ export function CreditNoteDetails() {
         }
     };
 
+    const handleResendEmail = async () => {
+        if (!currentCompany || !creditNote) return;
+        setResendingEmail(true);
+        try {
+            const response = await invoiceService.resendEmail(currentCompany.id, creditNote.id);
+            toast({
+                title: 'Email renvoyé',
+                description: 'L\'avoir a été renvoyé par email au client',
+            });
+            if (response.warning) {
+                toast({ title: 'Avertissement', description: response.warning });
+            }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Erreur',
+                description: error.message || 'Impossible de renvoyer l\'email',
+            });
+        } finally {
+            setResendingEmail(false);
+        }
+    };
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Math.abs(amount));
     };
@@ -209,15 +235,15 @@ export function CreditNoteDetails() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                    <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold">{creditNote.invoice_number}</h1>
-                            <Badge className="bg-red-100 text-red-800">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="min-w-0 break-words text-2xl font-bold">{creditNote.invoice_number}</h1>
+                            <Badge className="shrink-0 bg-red-100 text-red-800">
                                 <Receipt className="mr-1 h-3 w-3" />
                                 Avoir
                             </Badge>
@@ -228,11 +254,12 @@ export function CreditNoteDetails() {
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
                     {chorusEnabled && !['draft', 'cancelled'].includes(creditNote.status) && !chorusSubmission && (
                         <Button
                             variant="outline"
                             size="sm"
+                            className="w-full sm:w-auto"
                             onClick={() => {
                                 setChorusForm({
                                     codeDestinataire: chorusSettings?.default_code_destinataire || creditNote.client?.siret || '',
@@ -247,7 +274,19 @@ export function CreditNoteDetails() {
                             Chorus Pro
                         </Button>
                     )}
-                    <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+                    {creditNote.status !== 'draft' && permissions.canSendInvoice && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                            onClick={handleResendEmail}
+                            disabled={resendingEmail}
+                        >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${resendingEmail ? 'animate-spin' : ''}`} />
+                            Renvoyer par email
+                        </Button>
+                    )}
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleDownloadPdf}>
                         <Download className="mr-2 h-4 w-4" />
                         PDF
                     </Button>

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft, Edit, Send, Copy, Download, FileText,
     CheckCircle, XCircle, Clock, AlertTriangle, Building,
-    Mail, Phone, MapPin, Eye
+    Mail, Phone, MapPin, Eye, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,6 +84,7 @@ export function QuoteDetails() {
     const [publishedSalesTermsVersion, setPublishedSalesTermsVersion] = useState<number | null>(null);
     const [signatureDocuments, setSignatureDocuments] = useState<QuoteSignatureDocument[]>([]);
     const [signatureDocumentsLoading, setSignatureDocumentsLoading] = useState(false);
+    const [resendingEmail, setResendingEmail] = useState(false);
 
     const loadQuote = useCallback(async () => {
         if (!currentCompany || !id) return;
@@ -233,6 +234,29 @@ export function QuoteDetails() {
         }
     };
 
+    const handleResendEmail = async () => {
+        if (!currentCompany || !quote) return;
+        setResendingEmail(true);
+        try {
+            const response = await quoteService.resendEmail(currentCompany.id, quote.id);
+            toast({
+                title: 'Email renvoyé',
+                description: 'Le devis a été renvoyé par email au client',
+            });
+            if (response.warning) {
+                toast({ title: 'Avertissement', description: response.warning });
+            }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Erreur',
+                description: error.message || 'Impossible de renvoyer l\'email',
+            });
+        } finally {
+            setResendingEmail(false);
+        }
+    };
+
     const handleDownloadSignatureDocument = async (signatureDocument: QuoteSignatureDocument) => {
         if (!currentCompany || !quote) return;
         try {
@@ -346,6 +370,17 @@ export function QuoteDetails() {
                         <Button variant="outline" className="w-full sm:w-auto" onClick={handleDuplicate}>
                             <Copy className="mr-2 h-4 w-4" />
                             Dupliquer
+                        </Button>
+                    )}
+                    {quote.status !== 'draft' && permissions.canSendQuote && (
+                        <Button
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                            onClick={handleResendEmail}
+                            disabled={resendingEmail}
+                        >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${resendingEmail ? 'animate-spin' : ''}`} />
+                            Renvoyer par email
                         </Button>
                     )}
                     <Button variant="outline" className="w-full sm:w-auto" onClick={handleDownloadPdf}>

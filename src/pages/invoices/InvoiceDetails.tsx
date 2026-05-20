@@ -592,10 +592,22 @@ export function InvoiceDetails() {
                             Modifier
                         </Button>
                     )}
-                    {['draft', 'sent'].includes(invoice.status) && permissions.canSendInvoice && (
+                    {invoice.status === 'draft' && permissions.canSendInvoice && (
                         <Button size="sm" className="w-full sm:w-auto" onClick={() => setSendDialogOpen(true)}>
                             <Send className="mr-2 h-4 w-4" />
-                            {invoice.status === 'draft' ? 'Envoyer' : 'Renvoyer'}
+                            Envoyer
+                        </Button>
+                    )}
+                    {['sent', 'overdue'].includes(invoice.status) && permissions.canSendInvoice && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                            onClick={handleResendEmail}
+                            disabled={resendingEmail}
+                        >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${resendingEmail ? 'animate-spin' : ''}`} />
+                            Renvoyer par email
                         </Button>
                     )}
                     {['sent', 'overdue'].includes(invoice.status) && permissions.canEditInvoice && (
@@ -623,18 +635,6 @@ export function InvoiceDetails() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            {['sent', 'overdue'].includes(invoice.status) && permissions.canSendInvoice && (
-                                <>
-                                    <DropdownMenuItem
-                                        onClick={handleResendEmail}
-                                        disabled={resendingEmail}
-                                    >
-                                        <RefreshCw className={`mr-2 h-4 w-4 ${resendingEmail ? 'animate-spin' : ''}`} />
-                                        Renvoyer par email
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                </>
-                            )}
                             {chorusEnabled
                                 && invoice.client?.client_sector === 'public'
                                 && invoice.client?.chorus_pro_eligibility_status === 'eligible'

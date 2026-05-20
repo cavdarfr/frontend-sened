@@ -2122,6 +2122,18 @@ export const quoteService = {
   },
 
   /**
+   * Renvoyer l'email d'un devis deja envoye
+   */
+  async resendEmail(
+    companyId: string,
+    quoteId: string,
+  ): Promise<{ success: boolean; message: string; warning?: string }> {
+    return fetchWithAuth(`/companies/${companyId}/quotes/${quoteId}/resend`, {
+      method: "POST",
+    });
+  },
+
+  /**
    * Convertit un devis en facture
    */
   async convert(companyId: string, quoteId: string): Promise<Invoice> {
