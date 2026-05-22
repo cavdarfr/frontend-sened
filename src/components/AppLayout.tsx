@@ -603,7 +603,7 @@ function AppLayoutContent() {
                     isSidebarOpen ? "translate-x-0" : "-translate-x-full",
                 )}
             >
-                <div className="flex h-full flex-col overflow-y-auto">
+                <div className="flex h-full flex-col overflow-y-auto overscroll-contain">
                     {/* Logo SENED */}
                     <Link
                         to="/dashboard"
@@ -923,7 +923,7 @@ function AppLayoutContent() {
                 )}
 
                 {/* Page content */}
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto overscroll-contain p-6">
                     <Suspense
                         fallback={
                             <div className="flex items-center justify-center h-full">
