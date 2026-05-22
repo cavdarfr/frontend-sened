@@ -866,6 +866,7 @@ export type ReminderStatus = "pending" | "sent" | "failed" | "cancelled";
 export interface ReminderRule {
   days_offset: number;
   channel: ReminderChannel;
+  level?: 1 | 2 | 3;
   email_template_id?: string;
   sms_template?: string;
 }
@@ -935,6 +936,19 @@ export interface UpdateReminderSettingsData {
   quote_rules?: ReminderRule[];
   sender_email?: string;
   sender_name?: string;
+}
+
+export interface PreviewReminderEmailData {
+  document_type: "invoice" | "quote";
+  days_offset: number;
+  level?: 1 | 2 | 3;
+}
+
+export interface ReminderEmailPreview {
+  subject: string;
+  html: string;
+  text: string;
+  context: string;
 }
 
 export interface SendManualReminderData {

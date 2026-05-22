@@ -594,12 +594,12 @@ export function SettingsPage() {
                         <CardHeader>
                             <CardTitle>Préférences de notifications</CardTitle>
                             <CardDescription>
-                                Configurez comment vous souhaitez être notifié
+                                Consultez les réglages liés aux notifications.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground">
-                                Les paramètres de notifications seront disponibles prochainement.
+                            <p className="text-sm text-muted-foreground">
+                                Les relances automatiques se règlent depuis l'onglet Relances de chaque fiche entreprise.
                             </p>
                         </CardContent>
                     </Card>

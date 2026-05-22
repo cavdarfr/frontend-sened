@@ -68,6 +68,8 @@ import type {
   ReminderListResponse,
   ReminderStats,
   UpdateReminderSettingsData,
+  PreviewReminderEmailData,
+  ReminderEmailPreview,
   SendManualReminderData,
   CreateEmailTemplateData,
   UpdateEmailTemplateData,
@@ -2619,6 +2621,19 @@ export const reminderService = {
   ): Promise<ReminderSettings> {
     return fetchWithAuth(`/companies/${companyId}/reminders/settings`, {
       method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Génère un aperçu d'email de relance automatique sans envoyer d'email
+   */
+  async previewEmail(
+    companyId: string,
+    data: PreviewReminderEmailData,
+  ): Promise<ReminderEmailPreview> {
+    return fetchWithAuth(`/companies/${companyId}/reminders/preview`, {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },

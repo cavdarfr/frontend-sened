@@ -32,6 +32,7 @@ import {
   LinkIcon,
   Unlink,
   Send,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,7 @@ import { EnterpriseLookupField } from "@/components/shared/EnterpriseLookupField
 import { getRoleLabel, usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/hooks/useAuth";
 import type { SirenSearchResult } from "@/types";
+import { AutomaticReminderSettings } from "@/pages/settings/ReminderSettingsPage";
 
 // Types pour les données de chaque section
 type GeneralData = {
@@ -157,6 +159,7 @@ type CompanyTab =
   | "contact"
   | "banking"
   | "settings"
+  | "reminders"
   | "members"
   | "accountant";
 
@@ -1325,6 +1328,10 @@ export function CompanyDetails() {
             <Settings className="h-4 w-4" />
             Paramètres
           </TabsTrigger>
+          <TabsTrigger value="reminders" className="shrink-0 gap-2">
+            <Bell className="h-4 w-4" />
+            Relances
+          </TabsTrigger>
           {canViewMembers && (
             <TabsTrigger value="members" className="shrink-0 gap-2">
               <Users className="h-4 w-4" />
@@ -2010,6 +2017,16 @@ export function CompanyDetails() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="reminders" className="space-y-6">
+          {company && (
+            <AutomaticReminderSettings
+              companyId={company.id}
+              companyName={company.name}
+              canManage={isAdmin}
+            />
+          )}
         </TabsContent>
 
         {/* Onglet Profils */}

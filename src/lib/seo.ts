@@ -26,7 +26,7 @@ const ROUTE_TITLE_RULES: { pattern: string; title: string }[] = [
     { pattern: '/superadmin/invoices', title: 'Factures (superadmin)' },
     { pattern: '/superadmin/credit-notes', title: 'Avoirs (superadmin)' },
     { pattern: '/superadmin', title: 'Superadmin' },
-    { pattern: '/settings/reminders', title: 'Relances' },
+    { pattern: '/settings/reminders', title: 'Relances automatiques' },
     { pattern: '/settings/legal-documents', title: 'Documents légaux' },
     { pattern: '/settings', title: 'Paramètres' },
     { pattern: '/invoices/:id/payment', title: 'Enregistrer un paiement' },
